@@ -1,11 +1,11 @@
 import requests
 import sys
 import re
-import pymongo
+#import pymongo
 from bs4 import BeautifulSoup
 
-client = pymongo.MongoClient("mongodb+srv://dbTest:<password>@cluster0.fsdva.mongodb.net/personal-site?retryWrites=true&w=majority")
-db = client.test
+#client = pymongo.MongoClient("mongodb+srv://dbTest:<password>@cluster0.fsdva.mongodb.net/personal-site?retryWrites=true&w=majority")
+#db = client.test
 
 URL = 'https://www.pinkbike.com/buysell/list/?lat=37.6806&lng=-122.4073&distance=101&category=2'    #local Trail
 #URL = 'https://www.pinkbike.com/buysell/list/?lat=37.6806&lng=-122.4073&distance=101&category=1'   #local DH
@@ -21,12 +21,16 @@ soup = BeautifulSoup(page.content, 'html.parser')
 bikeElements = soup.find_all('div', class_="bsitem")
 for bikeElement in bikeElements:
     
-    bikeURL = bikeElement.find('li', class_='uImage').find('a', href=True)
-    if None in (bikeURL):
-        continue
+    pbId = bikeElement.get('id')
+    bikeURL = "https://www.pinkbike.com/buysell/" + pbId
     #print(bikeElement.text.strip())
-    bikeId = bikeElement.get('id')
-    bikeSpecs = bikeElement.find_all('div')
+    bikeSpecs = bikeElement.find_all('td')
+    title = bikeSpecs[1].a.string
+    condition = bikeSpecs[1]
+    print(condition)
+    '''
     for spec in bikeSpecs:
        print(spec.text.strip())
+   '''
     break
+   
