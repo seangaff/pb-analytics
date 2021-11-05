@@ -32,5 +32,6 @@ for bikeElement in bikeElements:
     for spec in bikeSpecs:
        print(spec.text.strip())
    '''
+   #test
     break
    
