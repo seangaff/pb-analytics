@@ -24,10 +24,17 @@ for bikeElement in bikeElements:
     pbId = bikeElement.get('id')
     bikeURL = "https://www.pinkbike.com/buysell/" + pbId
     #print(bikeElement.text.strip())
-    bikeSpecs = bikeElement.find_all('td')
-    title = bikeSpecs[1].a.string
-    condition = bikeSpecs[1]
-    print(condition)
+    bikeData = bikeElement.find_all('td')
+    title = bikeData[1].a.string
+    bikeSpecs = bikeData[1].find_all("div")
+    
+    condition = bikeSpecs[1].text.split(":",1)[1]
+    frameSize = bikeSpecs[2].text.split(":",1)[1]
+    wheelSize = bikeSpecs[3].text.split(":",1)[1]
+    Material = bikeSpecs[4].text.split(":",1)[1]
+    frontTravel = bikeSpecs[5].text.split(":",1)[1]
+    rearTravel = bikeSpecs[6].text.split(":",1)[1]
+    print()
     '''
     for spec in bikeSpecs:
        print(spec.text.strip())
