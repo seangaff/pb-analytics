@@ -1,3 +1,6 @@
+#investigate scrapy
+#Speed Up Beautiful Soup
+# https://thehftguy.com/2020/07/28/making-beautifulsoup-parsing-10-times-faster/
 import requests
 import sys
 import re
@@ -12,11 +15,12 @@ cred = credentials.Certificate('/Users/seangaffney/Documents/Code/pb-analytics-6
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-#URL = 'https://www.pinkbike.com/buysell/list/?lat=37.6806&lng=-122.4073&distance=101&category=2'       #local Trail
+#URL = 'https://www.pinkbike.com/buysell/list/?lat=37.6806&lng=-122.4073&distance=101&category=2'           #local Trail
 baseURL = 'https://www.pinkbike.com/buysell/list/?region=3&category=2'                                      #All Trail
 global theCount
 theCount = 0
 
+# Iterates through all pages of search results - Starting From End
 def iterateSeach():
     page = requests.get(baseURL)
     soup = BeautifulSoup(page.content, 'html.parser')
@@ -25,34 +29,32 @@ def iterateSeach():
     print("-Iterating through search pages...")
     thePage = lastPage
     for i in range(thePage,0,-1):
-        print("-Scraping Page " + str(i))
+        print("*SCRAPING PAGE " + str(i))
         URL = "https://www.pinkbike.com/buysell/list/?region=3&page=" + str(i) + "&category=2"
         scrapeSearchPage(URL)
-    
+
+#Iterates through all bikes in a result page   
 def scrapeSearchPage(URL):
     page = requests.get(URL)
     soup = BeautifulSoup(page.content, 'html.parser')
     bikeElements = soup.find_all('div', class_="bsitem")
     # lastPage = int(soup.find('ul',class_="paging-middle centertext").find_all('li')[-1].text.strip())
-
-    #Iterates through all bikes in a search result
     for bikeElement in bikeElements:
         scrapeElement(bikeElement)
         
-
+#Scrapes a single bike element, its details, and adds it to the database
 def scrapeElement(bikeElement):
     # if theCount == 20000:
     #     sys.exit()
-    print(" -Scraping Element")
     pbID = bikeElement.get('id').replace("csid","")
-    print("ID: " + pbID)
+    print("    ID: " + pbID)
     bikeURL = "https://www.pinkbike.com/buysell/" + pbID
 
     bikeData = bikeElement.find_all('td')
     bikeSpecs = bikeData[1].find_all("div")
     #check for all necessary information
     if len(bikeSpecs) < 7:
-        print(" Missing Specs Data")
+        print("Missing Specs Data")
         return
     title = bikeData[1].a.string
     condition = bikeSpecs[1].text.split(":",1)[1].strip()
@@ -119,6 +121,9 @@ def scrapeElement(bikeElement):
 
 # def publishData():
 #     print("Publishing Data")
+
+def assessTitle():
+    print("Assessing Title")
 
 if __name__ == '__main__':
     iterateSeach()
