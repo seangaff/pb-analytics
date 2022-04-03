@@ -8,23 +8,34 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 
-
 cred = credentials.Certificate('/Users/seangaffney/Documents/Code/pb-analytics-616-firebase-adminsdk-5rw79-c5f78deb10.json')
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-
 #URL = 'https://www.pinkbike.com/buysell/list/?lat=37.6806&lng=-122.4073&distance=101&category=2'       #local Trail
-URL = 'https://www.pinkbike.com/buysell/list/?region=3&category=2'                                      #All Trail
+baseURL = 'https://www.pinkbike.com/buysell/list/?region=3&category=2'                                      #All Trail
 
-page = requests.get(URL)
-soup = BeautifulSoup(page.content, 'html.parser')
-bikeElements = soup.find_all('div', class_="bsitem")
-lastPage = int(soup.find('ul',class_="paging-middle centertext").find_all('li')[-1].text.strip())
+def iterateSeach():
+    page = requests.get(baseURL)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    lastPage = int(soup.find('ul',class_="paging-middle centertext").find_all('li')[-1].text.strip())
+    print(lastPage + " Total pages")
+    print("-Iterating through search pages...")
 
+def scrapeSearchPage(URL):
+    print("-Scraping Search Page")
+    page = requests.get(URL)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    bikeElements = soup.find_all('div', class_="bsitem")
+    # lastPage = int(soup.find('ul',class_="paging-middle centertext").find_all('li')[-1].text.strip())
 
-#Iterates through all bikes in a search result
-for bikeElement in bikeElements:
+    #Iterates through all bikes in a search result
+    for bikeElement in bikeElements:
+        scrapeElement(bikeElement)
+        break
+
+def scrapeElement(bikeElement):
+    print(" -Scraping Element")
     pbID = bikeElement.get('id').replace("csid","")
     print("ID: " + pbID)
     bikeURL = "https://www.pinkbike.com/buysell/" + pbID
@@ -34,7 +45,7 @@ for bikeElement in bikeElements:
     #check for all necessary information
     if len(bikeSpecs) < 7:
         print(" Missing Specs Data")
-        break
+        return
     title = bikeData[1].a.string
     condition = bikeSpecs[1].text.split(":",1)[1].strip()
     frameSize = bikeSpecs[2].text.split(":",1)[1].strip()
@@ -47,7 +58,6 @@ for bikeElement in bikeElements:
     location = bikeInfo[0].text.strip()
     # seller = bikeInfo[1].text.split(":")[1].split("|")[0].replace("Outside+", "").strip()
     seller = bikeInfo[1].a.text.replace("Outside+", "").strip()
-    print(seller)
     price = int(bikeInfo[2].text.replace("$","").split(" ")[0].strip())
     #if price is in CAD, rough conversion to USD
     if((bikeInfo[2].text.replace("$","").split(" ")[1].strip()) == "CAD"):
@@ -93,22 +103,13 @@ for bikeElement in bikeElements:
             u'watch_count': watchCount,
         },
     })
-    break
 
-def iterateSeach():
-    print("Iterating through search pages")
+# def scrapeListing():
+#     print("Scraping Listing")
 
-def scrapeSearchPage(URL):
-    print("Scraping Search Page")
-
-def scrapeElement():
-    print("Scraping Element")
-
-def scrapeListing():
-    print("Scraping Listing")
-
-def publishData():
-    print("Publishing Data")
+# def publishData():
+#     print("Publishing Data")
 
 if __name__ == '__main__':
-    iterateSeach()
+    # iterateSeach()
+    scrapeSearchPage(baseURL)
