@@ -14,16 +14,22 @@ db = firestore.client()
 
 #URL = 'https://www.pinkbike.com/buysell/list/?lat=37.6806&lng=-122.4073&distance=101&category=2'       #local Trail
 baseURL = 'https://www.pinkbike.com/buysell/list/?region=3&category=2'                                      #All Trail
+global theCount
+theCount = 0
 
 def iterateSeach():
     page = requests.get(baseURL)
     soup = BeautifulSoup(page.content, 'html.parser')
     lastPage = int(soup.find('ul',class_="paging-middle centertext").find_all('li')[-1].text.strip())
-    print(lastPage + " Total pages")
+    print(lastPage)
     print("-Iterating through search pages...")
-
+    thePage = lastPage
+    for i in range(thePage,0,-1):
+        print("-Scraping Page " + str(i))
+        URL = "https://www.pinkbike.com/buysell/list/?region=3&page=" + str(i) + "&category=2"
+        scrapeSearchPage(URL)
+    
 def scrapeSearchPage(URL):
-    print("-Scraping Search Page")
     page = requests.get(URL)
     soup = BeautifulSoup(page.content, 'html.parser')
     bikeElements = soup.find_all('div', class_="bsitem")
@@ -32,9 +38,11 @@ def scrapeSearchPage(URL):
     #Iterates through all bikes in a search result
     for bikeElement in bikeElements:
         scrapeElement(bikeElement)
-        break
+        
 
 def scrapeElement(bikeElement):
+    # if theCount == 20000:
+    #     sys.exit()
     print(" -Scraping Element")
     pbID = bikeElement.get('id').replace("csid","")
     print("ID: " + pbID)
@@ -103,6 +111,8 @@ def scrapeElement(bikeElement):
             u'watch_count': watchCount,
         },
     })
+    # theCount += 1
+    # print(theCount)
 
 # def scrapeListing():
 #     print("Scraping Listing")
@@ -111,5 +121,5 @@ def scrapeElement(bikeElement):
 #     print("Publishing Data")
 
 if __name__ == '__main__':
-    # iterateSeach()
-    scrapeSearchPage(baseURL)
+    iterateSeach()
+    # scrapeSearchPage(baseURL)
