@@ -1,9 +1,12 @@
 #investigate scrapy
-#Speed Up Beautiful Soup
-# https://thehftguy.com/2020/07/28/making-beautifulsoup-parsing-10-times-faster/
+#async efficiency
+# https://sempioneer.com/python-for-seo/asynchronous-web-scraping-python/#How_Is_Asychronous_Web_Scraping_Different_To_Using_Python_Requests
+# import aiohttp
+# import asyncio
 import requests
+import lxml
+import chardet
 import sys
-import re
 import datetime
 from datetime import datetime
 from bs4 import BeautifulSoup
@@ -11,19 +14,10 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 
-cred = credentials.Certificate('/Users/seangaffney/Documents/Code/pb-analytics-616-firebase-adminsdk-5rw79-c5f78deb10.json')
-firebase_admin.initialize_app(cred)
-db = firestore.client()
-
-#URL = 'https://www.pinkbike.com/buysell/list/?lat=37.6806&lng=-122.4073&distance=101&category=2'           #local Trail
-baseURL = 'https://www.pinkbike.com/buysell/list/?region=3&category=2'                                      #All Trail
-global theCount
-theCount = 0
-
 # Iterates through all pages of search results - Starting From End
 def iterateSeach():
     page = requests.get(baseURL)
-    soup = BeautifulSoup(page.content, 'html.parser')
+    soup = BeautifulSoup(page.content, 'lxml')
     lastPage = int(soup.find('ul',class_="paging-middle centertext").find_all('li')[-1].text.strip())
     print(lastPage)
     print("-Iterating through search pages...")
@@ -35,7 +29,7 @@ def iterateSeach():
 
 #Iterates through all bikes in a result page   
 def scrapeSearchPage(URL):
-    page = requests.get(URL)
+    page = requests_session.get(URL)
     soup = BeautifulSoup(page.content, 'html.parser')
     bikeElements = soup.find_all('div', class_="bsitem")
     # lastPage = int(soup.find('ul',class_="paging-middle centertext").find_all('li')[-1].text.strip())
@@ -44,8 +38,9 @@ def scrapeSearchPage(URL):
         
 #Scrapes a single bike element, its details, and adds it to the database
 def scrapeElement(bikeElement):
-    # if theCount == 20000:
-    #     sys.exit()
+    global theCount
+    if theCount == 20000:
+        sys.exit("Firebase Limit Reached: 20000 Writes")
     pbID = bikeElement.get('id').replace("csid","")
     print("    ID: " + pbID)
     bikeURL = "https://www.pinkbike.com/buysell/" + pbID
@@ -75,8 +70,8 @@ def scrapeElement(bikeElement):
     price = int(price)
 
     #get listing data from Bike's page by pbID
-    bikePage = requests.get(bikeURL)
-    bikeSoup = BeautifulSoup(bikePage.content, 'html.parser')   
+    bikePage = requests_session.get(bikeURL)
+    bikeSoup = BeautifulSoup(bikePage.content, 'lxml')   
     bikeDetails = bikeSoup.find_all("div",class_="buysell-details-column")[1].get_text(strip=True, separator='\n').splitlines()
     postDate = datetime.strptime((bikeDetails[1].split(" ")[0].replace("-"," ")), '%b %d %Y')
     repostDate = datetime.strptime((bikeDetails[3].split(" ")[0].replace("-"," ")), '%b %d %Y')
@@ -113,8 +108,8 @@ def scrapeElement(bikeElement):
             u'watch_count': watchCount,
         },
     })
-    # theCount += 1
-    # print(theCount)
+    theCount += 1
+    # print("     " + theCount)
 
 # def scrapeListing():
 #     print("Scraping Listing")
@@ -126,5 +121,14 @@ def assessTitle():
     print("Assessing Title")
 
 if __name__ == '__main__':
+    cred = credentials.Certificate('/Users/seangaffney/Documents/Code/pb-analytics-616-firebase-adminsdk-5rw79-c5f78deb10.json')
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+
+    #URL = 'https://www.pinkbike.com/buysell/list/?lat=37.6806&lng=-122.4073&distance=101&category=2'           #local Trail
+    baseURL = 'https://www.pinkbike.com/buysell/list/?region=3&category=2'                                      #All Trail
+    theCount = 0
+    requests_session = requests.Session()
+
     iterateSeach()
     # scrapeSearchPage(baseURL)
