@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+from forex_python.converter import CurrencyRates
 
 # Iterates through all pages of search results - Starting From End
 def iterateSeach():
@@ -66,7 +67,7 @@ def scrapeElement(bikeElement):
     price = int(bikeInfo[2].text.replace("$","").split(" ")[0].strip())
     #if price is in CAD, rough conversion to USD
     if((bikeInfo[2].text.replace("$","").split(" ")[1].strip()) == "CAD"):
-        price = price*0.8
+        price = price * exchangeRate
     price = int(price)
 
     #get listing data from Bike's page by pbID
@@ -120,6 +121,12 @@ def scrapeElement(bikeElement):
 def assessTitle():
     print("Assessing Title")
 
+# Get CAD to USD conversion rate
+def getExchange():
+    global exchangeRate
+    exchangeRate = CurrencyRates().get_rate('CAD', 'USD')
+    exchangeRate = round(exchangeRate, 2)
+
 if __name__ == '__main__':
     cred = credentials.Certificate('/Users/seangaffney/Documents/Code/pb-analytics-616-firebase-adminsdk-5rw79-c5f78deb10.json')
     firebase_admin.initialize_app(cred)
@@ -129,6 +136,7 @@ if __name__ == '__main__':
     baseURL = 'https://www.pinkbike.com/buysell/list/?region=3&category=2'                                      #All Trail
     theCount = 0
     requests_session = requests.Session()
+    getExchange()
 
     iterateSeach()
     # scrapeSearchPage(baseURL)
