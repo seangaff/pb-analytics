@@ -15,13 +15,26 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 from forex_python.converter import CurrencyRates
 
-# Iterates through all pages of search results - Starting From End
+# Iterate through all pages of search results
 def iterateSeach():
     page = requests.get(baseURL)
     soup = BeautifulSoup(page.content, 'lxml')
     lastPage = int(soup.find('ul',class_="paging-middle centertext").find_all('li')[-1].text.strip())
     print(lastPage)
     print("-Iterating through search pages...")
+    thePage = lastPage
+    for i in range(0,thePage,1):
+        print("*SCRAPING PAGE " + str(i))
+        URL = "https://www.pinkbike.com/buysell/list/?region=3&page=" + str(i) + "&category=2"
+        scrapeSearchPage(URL)
+
+# Iterates through all pages of search results - Starting From End
+def iterateSeachBtoF():
+    page = requests.get(baseURL)
+    soup = BeautifulSoup(page.content, 'lxml')
+    lastPage = int(soup.find('ul',class_="paging-middle centertext").find_all('li')[-1].text.strip())
+    print(lastPage)
+    print("-Iterating through search pages BtoF...")
     thePage = lastPage
     for i in range(thePage,0,-1):
         print("*SCRAPING PAGE " + str(i))
@@ -118,7 +131,7 @@ def scrapeElement(bikeElement):
 # def publishData():
 #     print("Publishing Data")
 
-def assessTitle():
+def assessTitle(title):
     print("Assessing Title")
 
 # Get CAD to USD conversion rate
@@ -138,5 +151,5 @@ if __name__ == '__main__':
     requests_session = requests.Session()
     getExchange()
 
-    iterateSeach()
+    iterateSeachBtoF()
     # scrapeSearchPage(baseURL)
